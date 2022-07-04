@@ -159,9 +159,9 @@ cor(sales$NA_Sales, sales$EU_Sales)
   geom_smooth(method = 'lm', 
               lwd = 0.5, 
               color = 'red')+
-  labs(title = 'EU sales and North America sales',
+  labs(title = 'Global Sales vs North America sales',
        x = 'Global Sales',
-       y = 'EU Sales')+
+       y = 'NA Sales')+
   theme_light()
 
 # Scatter plot of global sales and EU sales
@@ -173,7 +173,7 @@ cor(sales$NA_Sales, sales$EU_Sales)
   geom_smooth(method = 'lm', 
               lwd = 0.5, 
               color = 'red')+
-  labs(title = 'Global sales and EU sales',
+  labs(title = 'Global sales vs EU sales',
        x = 'Global Sales',
        y = 'EU Sales')+
   theme_light()
@@ -182,5 +182,5 @@ cor(sales$NA_Sales, sales$EU_Sales)
      # The two scatter plots above show that there is linear relationship between Global_Sales and the two variables. As one of the assumptions of linear models is linearity between
      # the x and y variables we can use NA_Sales and EU_Sales to build an MLR model to predict Global_Sales.
 
-# 7.  Save and export tranfromed sales dataframe to csv as sales1
+# 7.  Save and export tranformed sales dataframe to csv as sales1
 write.csv(sales1, file = '/Users/hamdihassan/Desktop/Data Analysis training/Course_3_Adavnced_Analytics/Assignment 3/sales_transformed.csv')

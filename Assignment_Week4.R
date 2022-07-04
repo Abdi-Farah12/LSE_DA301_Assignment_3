@@ -2,6 +2,11 @@
 library(tidyverse)
 library(ggplot2)
 library(dplyr)
+library(plyr)
+library(purrr)
+
+# 1. Load and sense check data
+
 # read data
 lego <- read.csv(file.choose(), header = TRUE)
 
@@ -17,14 +22,16 @@ class(lego)
 # check df dimensions
 dim(lego)
 
-# Visualise the data to find insights related to the following questions.
+# check for missing values
+sum(is.na(lego))
 
-# 1. Which age group submits the most reviews?
+# 2. Visualise the data to find insights related to the following questions.
+
+# 2.1. Which age group submits the most reviews?
 
 # a)Use the aggregate function to sum the number of reviews by age
 ages_reviews <- aggregate(num_reviews~ages, lego, sum)
 
-head(ages_reviews)
 
 # b) Plot the total reviews by age
 
@@ -83,7 +90,7 @@ ggplot(data = age_group_reviews,
 
 
 
-# 2. What is the most expensive Lego set purchased by customers who are at least 25 years old (>25 years)?
+# 3. What is the most expensive Lego set purchased by customers who are at least 25 years old (>25 years)?
 
 # a) Create a new data frame that contains only data for customers 25 years or older
 lego_age25 <- round(lego[lego$ages>=25,],2)
@@ -92,28 +99,34 @@ lego_age25 <- round(lego[lego$ages>=25,],2)
 str(lego_age25)
 # Note: new data frame has 8 columns as expected and 2313 observations compared 12261 in the original dataset
 
-# b) aggregate the ages and group by list_price to get the total number of purchases per list price
-age_purchases <- aggregate(ages~list_price, lego_age25, sum)
+# b)Count the frequency of age and group by list_price using the groupby() and summarise() functions 
+#to get a total purchase per price list
 
-# View the aggregated data frame
+age_purchases <- lego_age25 %>%
+  group_by(list_price) %>%
+  dplyr::summarise(ages = n()) %>%
+  arrange(round(desc(ages), 2))
+
+# View the grouped data frame
 head(age_purchases)
 
-# c) Use max function to find the highest list price in the data frame
 
-max(lego_age25$list_price)
+# c) Arrange the data frame by descending order of list_price and slice the top 10 values
 
-# The maximum list price in the data frame is $259.87. However we cannot take this to be the answer to the business question
-# as we do not know if there are purchases related to it. 
-# To overcome this we will plot the 10 highest list prices by the number of purchases.  
-
-# Arrange the data frame by descending order of list_price and slice the top 10 values
-ages_count <- age_purchases %>%
+# Use arrange() function order values in descending order and then slice top 10 and store in a new object
+expensive <- age_purchases %>%
   arrange(desc(list_price)) %>%
   slice(1:10) 
 
+# d) Use max() function to determine the most expensive price with an associated purchase
+max(age_count$list_price)
 
-# Plot the top 10 list price by the number of purchases and highlight the most expensive list price.
-ggplot(data = ages_count, 
+# Notes:
+#The the most expensive purchase recorded within the target age group is $259.87 which answers the question.
+# The get an idea of how often this product and others in the top 10 most expensive are purchase I will visualise it in a plot.
+
+# e) Plot the top 10 list price by the number of purchases and highlight the most expensive list price.
+ggplot(data = expensive, 
        mapping = aes(x=factor(list_price), 
                      y=ages,
                      fill = ifelse(list_price == "259.87", "Highlighted",'Normal'))) +
@@ -127,6 +140,59 @@ ggplot(data = ages_count,
                                          size=0.5, linetype='blank'))+
   scale_fill_discrete(name = "List Price", 
                       labels = c("Most Expensive", "Others"))
+
   
 # Notes: The most expensive lego set purchased by customers 25 and over is $259.87.
-# This product has been purchased on 29 occassions by that particular age group.
+# This product has been purchased on 1 occasion by that particular age group. 
+
+# f) Most frequent price of purchases for customers 25 and over
+
+# Use arrange() function order values in descending order and then slice top 10 and then store in a new object
+popular_price <- age_purchases %>%
+  arrange(desc(ages)) %>%
+  slice(1:10) 
+
+# g) Visualize most frequent price for purchase for customers 25 or older
+ggplot(data = popular_price, 
+       mapping = aes(x=factor(list_price), 
+                     y=ages,
+                     fill = factor(list_price))) +
+  geom_bar(stat = 'identity') +
+  geom_text(aes(label = ages), vjust = 0) +
+  labs(title = 'Most Expensive Product purchased by over 25s',
+       x= 'List Price',
+       y = 'Number of Purchaes')
+  
+
+# 3.1 most popular products by piece_count for customers 25 and older.
+
+# a) Count the frequency of age and group bypiece_count using the groupby() and 
+#summarise() functions.
+age_product <- lego_age25 %>%
+  group_by(piece_count) %>%
+  dplyr::summarise(ages = n()) %>%
+  arrange(desc(ages))
+
+# View the grouped data frame
+head(age_product)
+
+#  b) Use arrange() function order values in descending order and then slice top 10 and store in a new object
+popular_product <- age_product %>%
+  arrange(desc(ages)) %>%
+  slice(1:10)
+
+# c) Visualize most frequently product by piece_count for customers 25 or older
+ggplot(data = popular_product, 
+       mapping = aes(x=factor(piece_count), 
+                     y=ages,
+                     fill = factor(piece_count))) +
+  geom_bar(stat = 'identity') +
+  geom_text(aes(label = ages), vjust = 0) +
+  labs(title = 'Most Popular piece count purchased by over 25s',
+       x= 'Peice Count',
+       y = 'Number of Purchaes')
+
+# Notes:
+#The visualisation shows that the most popular piece count purchased by customers in th eage group
+# 25 years and older is 494 peices. 
+
